@@ -1,0 +1,157 @@
+
+---
+title: "MT5000 Data Analytics & Visualisation: Assignment 2 "
+format: html
+execute:
+ echo: false
+ warning: false
+ message: false
+---
+
+## Yellow Fever Vaccination Rate
+
+Meaning of the indicator - Percentage of newborns who survived and who had received the yellow fever vaccination (for at-risk nations where the vaccine is on the national schedule).
+
+Numerator - Number of surviving infants who obtained a dose of the yellow fever vaccination.
+
+Denominator - Total number of infants that have survived
+
+More Information - Only applicable to nations where YF is a danger and YF vaccination is included in the national schedule
+
+Aggregate technique - Population weighted average
+
+## Brief Description
+
+The four figures on this page highlight the status of Yellow fever vaccination among surviving infants in South America and Africa. 
+
+Figure 1 illustrates that the average rate of yellow fever vaccination among infants has increased substantially over the years.
+
+Figure 2 displays the vaccination rate in 2021: the latest year for which data is available. 
+
+Figure 3 outlines the relationship between Yellow fever vaccination rate and life expectancy at birth.
+
+Figure 4 shows the percentage of GDP utilised for military expenditure for the countries surveyed. Countries with high military expenditure are often seen to allocate lower amounts towards Health. 
+
+```{r}
+#| include: false
+install.packages('tidyverse')
+```
+
+```{r}
+#| echo: false
+library(tidyverse)
+```
+
+```{r}
+#| echo: false
+uni_ind <- read.csv("unicef_indicator_1.csv")
+uni_met <- read.csv("unicef_metadata.csv")
+```
+
+
+```{r}
+#| echo: false
+table_1 <- uni_ind %>%
+select(country, year, observation_value)
+
+table_2 <- uni_met
+```
+
+```{r}
+#| echo: false
+table_left_joined <- left_join(table_1, table_2, by = c("country", "year"))
+```
+
+
+
+
+
+
+
+```{r}
+#| echo: false
+data_by_year <- group_by(table_left_joined, year)
+```
+
+```{r}
+#| echo: false
+average_vaccination_per_year <- summarise(data_by_year, mean_observation_value = mean(observation_value))
+```
+
+
+```{r}
+#| echo: false
+ggplot(data = average_vaccination_per_year) +
+aes(x = year, y = mean_observation_value) +
+geom_line() +
+guides(color ="none")                                         
+```
+
+
+```{r}
+#| echo: false
+install.packages("maps")
+```
+
+```{r}
+#| echo: false
+library(maps)
+```
+
+
+```{r}
+#| echo: false
+observation_value_2021 <- table_left_joined %>%
+filter(year == 2021)
+map_world <- map_data("world")
+map_observation_value_2021 <- full_join(map_world, observation_value_2021, by = c("region" = "country"))
+ggplot(data = map_observation_value_2021) +
+aes(x = long, y = lat, group = group, fill = observation_value) +
+geom_polygon() +
+scale_fill_gradient(low = "red", high = "green", na.value = "grey") +
+labs(
+title = "Yellow Fever vaccination rate in 2021",
+subtitle = "Data is not available for countries in grey.",
+caption = "Source: UNICEF",
+x = "Longitude",
+y = "Latitude",
+fill = "Vaccination Rate"
+) +
+theme_bw()
+```
+
+
+```{r}
+#| echo: false
+data_2020 <- filter(table_left_joined, year == "2020")
+```
+
+
+
+```{r}
+#| echo: false
+ggplot(data = data_2020) +
+aes(x = observation_value, y = Life_expectancy_birth, color= country) +
+geom_point() +
+geom_smooth(method=lm)
+```
+
+
+
+```{r}
+#| echo: false
+data_2021 <- filter(table_left_joined, year == "2021")
+```
+
+
+```{r}
+#| echo: false
+ggplot(data_2021) +
+  aes(x = country, y = Military_expenditure_Percent_GDP) +
+  geom_col()
+```
+                                         
+Created by Vijay K Varghese
+
+
+
